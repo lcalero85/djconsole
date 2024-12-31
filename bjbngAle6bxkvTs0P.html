@@ -1,0 +1,1553 @@
+<html><head><base href="https://codepen.io/pen">
+<title>DJ Console Mixer</title>
+<style>
+:root {
+  --primary-dark: #1a1a1a;
+  --secondary-dark: #2d2d2d;
+  --accent-dark: #00ff95;
+  --highlight-dark: #ff1493;
+  --text-dark: #ffffff;
+
+  --primary-neon: #0f0f2d;
+  --secondary-neon: #1a1a3a;
+  --accent-neon: #00ffff;
+  --highlight-neon: #ff00ff;
+  --text-neon: #f0f0ff;
+
+  --primary-retro: #8b4513;
+  --secondary-retro: #a0522d;
+  --accent-retro: #deb887;
+  --highlight-retro: #cd853f;
+  --text-retro: #ffdead;
+
+  --primary-cyber: #1a1a3a;
+  --secondary-cyber: #2a2a4a;
+  --accent-cyber: #00ff00;
+  --highlight-cyber: #ff0000;
+  --text-cyber: #33ff33;
+
+  --primary-sunset: #2c1810;
+  --secondary-sunset: #4a1c10;
+  --accent-sunset: #ff7f50;
+  --highlight-sunset: #ff4500;
+  --text-sunset: #ffa07a;
+
+  --primary: var(--primary-dark);
+  --secondary: var(--secondary-dark);
+  --accent: var(--accent-dark);
+  --highlight: var(--highlight-dark);
+  --text: var(--text-dark);
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: var(--primary);
+  color: var(--text);
+  font-family: 'Arial', sans-serif;
+}
+
+.dj-console {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--secondary);
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.deck {
+  background: #1f1f1f;
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.platter {
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(30deg, #e0e0e0, #f5f5f5);
+  border-radius: 50%;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.5s;
+  touch-action: none;
+  cursor: grab;
+  box-shadow: 
+    inset 0 0 20px rgba(0,0,0,0.2),
+    0 5px 15px rgba(0,0,0,0.3);
+}
+
+.platter::before {
+  content: '';
+  position: absolute;
+  width: 90%;
+  height: 90%;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    circle at center,
+    transparent 0,
+    transparent 2px,
+    rgba(0,0,0,0.1) 2px,
+    rgba(0,0,0,0.1) 4px
+  );
+}
+
+.platter::after {
+  content: '';
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle at center, 
+    #f0f0f0 0%,
+    #d0d0d0 50%,
+    #c0c0c0 100%
+  );
+  border-radius: 50%;
+  border: 8px solid #333;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.platter.playing {
+  animation: rotate 2s linear infinite;
+}
+
+.platter:active {
+  cursor: grabbing;
+  background: linear-gradient(30deg, #d0d0d0, #e5e5e5);
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.waveform {
+  width: 90%; /* Control width */
+  height: 60px;
+  background: #111;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 10px auto; /* Center margins */
+}
+
+.waveform-data {
+  display: none;  
+  align-items: center;
+  justify-content: stretch; 
+  padding: 0;  
+  height: 100%;
+  width: 100%; 
+}
+
+.waveform-bar {
+  flex: 1; 
+  width: auto; 
+  margin: 0; 
+  height: 100%;
+  background: linear-gradient(180deg, 
+    var(--accent) 0%,
+    var(--highlight) 50%,
+    #00ffff 100%
+  );
+  animation: waveform-multi 1s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+@keyframes waveform-multi {
+  0% { 
+    transform: scaleY(0.2);
+    background-position: 0% 0%;
+  }
+  50% { 
+    transform: scaleY(0.8);
+    background-position: 100% 100%; 
+  }
+  100% { 
+    transform: scaleY(0.2);
+    background-position: 0% 0%;
+  }
+}
+
+.controls {
+  display: none; /* Hide old controls */
+}
+
+.effects-rack {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 20px auto; /* Center margins */
+  width: 90%; /* Control width */
+}
+
+.effect-button {
+  background: #333;
+  border: none;
+  color: var(--text);
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.effect-button:hover {
+  background: var(--accent);
+}
+
+.dj-pads {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 20px auto; /* Center margins */
+  width: 90%; /* Control width */
+}
+
+.pad {
+  background: linear-gradient(145deg, #2d2d2d, #1a1a1a);
+  border: none;
+  border-radius: 8px;
+  height: 60px; 
+  cursor: pointer;
+  color: var(--text);
+  font-weight: bold;
+  transition: all 0.2s;
+  box-shadow: 5px 5px 10px rgba(0,0,0,0.3);
+}
+
+.pad:active,
+.pad.active {
+  background: linear-gradient(145deg, var(--accent), var(--highlight));
+  transform: scale(0.95);
+  box-shadow: inset 2px 2px 5px rgba(0,0,0,0.2);
+}
+
+.pad-upload-btn {
+  width: 80%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pad-upload-btn:hover {
+  background: var(--accent) !important;
+}
+
+.crossfader {
+  width: 80px;
+  height: 300px;
+  background: #333;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+}
+
+.crossfader-handle {
+  width: 60px;
+  height: 30px;
+  background: var(--accent);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 5px;
+  cursor: grab;
+  transition: background-color 0.2s;
+}
+
+.crossfader-handle:active {
+  cursor: grabbing;
+  background: var(--highlight);
+}
+
+.file-upload {
+  width: 90%; /* Slightly less than full width */
+  padding: 10px;
+  background: #333;
+  border-radius: 5px;
+  margin: 10px auto; /* Center margins */
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s;
+  display: block; /* Block display */
+}
+
+.file-upload input[type="file"] {
+  display: none;
+}
+
+.track-info {
+  font-size: 0.9em;
+  color: var(--accent);
+  text-align: center;
+  min-height: 20px;
+  width: 100%; /* Full width */
+  margin: 5px auto; /* Center margins */
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.play-button:disabled,
+.auto-mix-button:disabled,
+.record-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #666;
+}
+
+.play-button:disabled:hover,
+.auto-mix-button:disabled:hover,
+.record-button:disabled:hover {
+  transform: none;
+  background: #666;
+}
+
+.play-button {
+  background: var(--accent);
+  border: none;
+  color: var(--primary);
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 10px auto;
+  display: block;
+  transition: all 0.3s;
+}
+
+.play-button:hover {
+  background: var(--highlight);
+  transform: scale(1.05);
+}
+
+.play-button.playing {
+  background: var(--highlight);
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center; /* Add center alignment */
+  margin: 10px auto; /* Center margins */
+  width: 90%; /* Control width */
+}
+
+.speed-reset {
+  background: var(--accent);
+  border: none;
+  color: var(--primary);
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.speed-reset:hover {
+  background: var(--highlight);
+  transform: scale(1.05);
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center; /* Add center alignment */
+  margin: 10px auto; /* Center margins */
+  width: 90%; /* Control width */
+}
+
+.volume-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 5px;
+  border-radius: 5px;
+  background: #333;
+  outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.volume-slider::-webkit-slider-thumb:hover {
+  background: var(--highlight);
+  transform: scale(1.2);
+}
+
+.volume-reset {
+  background: var(--accent);
+  border: none;
+  color: var(--primary);
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.volume-reset:hover {
+  background: var(--highlight);
+  transform: scale(1.05);
+}
+
+.auto-mix-button {
+  display: block;
+  width: 100%;
+  background: var(--accent);
+  border: none;
+  color: var(--primary);
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 20px 0;
+  transition: all 0.3s;
+}
+
+.auto-mix-button:hover {
+  background: var(--highlight);
+  transform: scale(1.05);
+}
+
+.auto-mix-button.active {
+  background: var(--highlight);
+}
+
+.recording-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.record-button {
+  display: block;
+  width: 100%;
+  background: #ff0000;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+  margin: 5px 0;
+}
+
+.record-button.recording {
+  background: #990000;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.download-button {
+  display: block;
+  width: 100%;
+  background: #00ff00;
+  border: none;
+  color: black;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+  margin: 5px 0;
+}
+
+.download-button:disabled {
+  background: #666;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.theme-selector {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.theme-selector label {
+  color: var(--text);
+  margin-right: 10px;
+}
+
+.theme-selector select {
+  background: var(--secondary);
+  color: var(--text);
+  padding: 5px 10px;
+  border: 2px solid var(--accent);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.theme-selector select:hover {
+  border-color: var(--highlight);
+}
+
+.theme-selector select:focus {
+  outline: none;
+  border-color: var(--highlight);
+  box-shadow: 0 0 5px var(--highlight);
+}
+
+.speed-control label,
+.volume-control label {
+  font-size: 0.9em;
+  min-width: 60px;
+  display: inline-block;
+}
+
+.loop-controls {
+  margin: 10px auto; /* Center margins */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 90%; /* Control width */
+  align-items: center; /* Center items */
+}
+
+.loop-button {
+  background: var(--accent);
+  border: none;
+  color: var(--primary);
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.loop-button.active {
+  background: var(--highlight);
+}
+
+.loop-points {
+  background: var(--secondary);
+  padding: 8px;
+  border-radius: 5px;
+}
+
+.loop-time {
+  font-size: 0.9em;
+  margin-bottom: 5px;
+}
+
+.clear-loop {
+  background: #666;
+  border: none;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+
+<div class="theme-selector">
+  <label for="theme-select">Console Theme:</label>
+  <select id="theme-select">
+    <option value="dark">Dark Theme</option>
+    <option value="neon">Neon Theme</option>
+    <option value="retro">Retro Theme</option>
+    <option value="cyber">Cyber Theme</option>
+    <option value="sunset">Sunset Theme</option>
+  </select>
+</div>
+
+<div class="dj-console">
+  <!-- Deck A -->
+  <div class="deck">
+    <label class="file-upload">
+      <input type="file" accept="audio/*" class="audio-input" data-deck="a">
+      Upload Track A
+    </label>
+    <div class="track-info" id="track-info-a">No track loaded</div>
+    <div class="platter playing"></div>
+    <button class="play-button" data-deck="a">Reproducir Track A</button>
+    <!-- Adding speed control for Deck A -->
+    <div class="speed-control">
+      <label style="color: var(--text); margin-right: 10px;">Speed:</label>
+      <input type="range" class="speed-slider" min="0.5" max="4.0" step="0.1" value="1" data-deck="a">
+      <span class="speed-value" data-deck="a">1.0x</span>
+      <button class="speed-reset" data-deck="a">Reset</button>
+    </div>
+    <div class="volume-control">
+      <label style="color: var(--text); margin-right: 10px;">Volume:</label>
+      <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1" data-deck="a">
+      <span class="volume-value" data-deck="a">100%</span>
+      <button class="volume-reset" data-deck="a">Reset</button>
+    </div>
+    <div class="waveform">
+      <div class="waveform-data">
+        <!-- Waveform bars generated by JS -->
+      </div>
+    </div>
+    <div class="effects-rack">
+      <button class="effect-button" data-effect="reverb">Reverb</button>
+      <button class="effect-button" data-effect="delay">Delay</button>
+      <button class="effect-button" data-effect="flanger">Flanger</button>
+      <button class="effect-button" data-effect="filter">Filter</button>
+    </div>
+    <div class="loop-controls">
+      <button class="loop-button">Set Loop</button>
+      <div class="loop-points" style="display: none;">
+        <div class="loop-time">
+          <span>Start: </span><span class="loop-start">0:00</span>
+          <span>End: </span><span class="loop-end">0:00</span>
+        </div>
+        <button class="clear-loop">Clear Loop</button>
+      </div>
+    </div>
+    <div class="dj-pads">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="kick" data-deck="a">KICK</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="snare" data-deck="a">SNARE</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div> 
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="hihat" data-deck="a">HI-HAT</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="clap" data-deck="a">CLAP</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="crash" data-deck="a">CRASH</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="fx1" data-deck="a">FX 1</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="fx2" data-deck="a">FX 2</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="fx3" data-deck="a">FX 3</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mixer Section -->
+  <div class="mixer-section">
+    <div class="crossfader">
+      <div class="crossfader-handle"></div>
+    </div>
+    <button class="auto-mix-button">Auto Mix</button>
+    <div class="recording-controls">
+      <button class="record-button">Start Recording</button>
+      <button class="download-button" disabled>Download Mix</button>
+    </div>
+  </div>
+
+  <!-- Deck B -->
+  <div class="deck">
+    <label class="file-upload">
+      <input type="file" accept="audio/*" class="audio-input" data-deck="b">
+      Upload Track B
+    </label>
+    <div class="track-info" id="track-info-b">No track loaded</div>
+    <div class="platter"></div>
+    <button class="play-button" data-deck="b">Reproducir Track B</button>
+    <!-- Adding speed control for Deck B -->
+    <div class="speed-control">
+      <label style="color: var(--text); margin-right: 10px;">Speed:</label>
+      <input type="range" class="speed-slider" min="0.5" max="4.0" step="0.1" value="1" data-deck="b">
+      <span class="speed-value" data-deck="b">1.0x</span>
+      <button class="speed-reset" data-deck="b">Reset</button>
+    </div>
+    <div class="volume-control">
+      <label style="color: var(--text); margin-right: 10px;">Volume:</label>
+      <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1" data-deck="b">
+      <span class="volume-value" data-deck="b">100%</span>
+      <button class="volume-reset" data-deck="b">Reset</button>
+    </div>
+    <div class="waveform">
+      <div class="waveform-data">
+        <!-- Waveform bars generated by JS -->
+      </div>
+    </div>
+    <div class="effects-rack">
+      <button class="effect-button" data-effect="reverb">Reverb</button>
+      <button class="effect-button" data-effect="delay">Delay</button>
+      <button class="effect-button" data-effect="flanger">Flanger</button>
+      <button class="effect-button" data-effect="filter">Filter</button>
+    </div>
+    <div class="loop-controls">
+      <button class="loop-button">Set Loop</button>
+      <div class="loop-points" style="display: none;">
+        <div class="loop-time">
+          <span>Start: </span><span class="loop-start">0:00</span>
+          <span>End: </span><span class="loop-end">0:00</span>
+        </div>
+        <button class="clear-loop">Clear Loop</button>
+      </div>
+    </div>
+    <div class="dj-pads">
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="kick" data-deck="b">KICK</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="snare" data-deck="b">SNARE</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div> 
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="hihat" data-deck="b">HI-HAT</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="clap" data-deck="b">CLAP</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="crash" data-deck="b">CRASH</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="fx1" data-deck="b">FX 1</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="fx2" data-deck="b">FX 2</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: center;">
+        <button class="pad" data-sound="fx3" data-deck="b">FX 3</button>
+        <input type="file" accept="audio/*" class="pad-upload" style="display: none;">
+        <button class="pad-upload-btn" style="font-size: 10px; padding: 2px; margin-top: 2px; background: #444; border: none; color: #fff; border-radius: 3px;">Change Sound</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>function saveTheme(theme) {
+  localStorage.setItem('selectedTheme', theme);
+}
+function loadTheme() {
+  return localStorage.getItem('selectedTheme') || 'dark';
+}
+function applyTheme(theme) {
+  const root = document.documentElement;
+  switch (theme) {
+    case 'dark':
+      root.style.setProperty('--primary', 'var(--primary-dark)');
+      root.style.setProperty('--secondary', 'var(--secondary-dark)');
+      root.style.setProperty('--accent', 'var(--accent-dark)');
+      root.style.setProperty('--highlight', 'var(--highlight-dark)');
+      root.style.setProperty('--text', 'var(--text-dark)');
+      break;
+    case 'neon':
+      root.style.setProperty('--primary', 'var(--primary-neon)');
+      root.style.setProperty('--secondary', 'var(--secondary-neon)');
+      root.style.setProperty('--accent', 'var(--accent-neon)');
+      root.style.setProperty('--highlight', 'var(--highlight-neon)');
+      root.style.setProperty('--text', 'var(--text-neon)');
+      break;
+    case 'retro':
+      root.style.setProperty('--primary', 'var(--primary-retro)');
+      root.style.setProperty('--secondary', 'var(--secondary-retro)');
+      root.style.setProperty('--accent', 'var(--accent-retro)');
+      root.style.setProperty('--highlight', 'var(--highlight-retro)');
+      root.style.setProperty('--text', 'var(--text-retro)');
+      break;
+    case 'cyber':
+      root.style.setProperty('--primary', 'var(--primary-cyber)');
+      root.style.setProperty('--secondary', 'var(--secondary-cyber)');
+      root.style.setProperty('--accent', 'var(--accent-cyber)');
+      root.style.setProperty('--highlight', 'var(--highlight-cyber)');
+      root.style.setProperty('--text', 'var(--text-cyber)');
+      break;
+    case 'sunset':
+      root.style.setProperty('--primary', 'var(--primary-sunset)');
+      root.style.setProperty('--secondary', 'var(--secondary-sunset)');
+      root.style.setProperty('--accent', 'var(--accent-sunset)');
+      root.style.setProperty('--highlight', 'var(--highlight-sunset)');
+      root.style.setProperty('--text', 'var(--text-sunset)');
+      break;
+  }
+}
+let audioContext = null;
+let audioNodes = {
+  a: {},
+  b: {}
+};
+const audioElements = {
+  a: new Audio(),
+  b: new Audio()
+};
+const scratchState = {
+  a: {
+    isScratching: false,
+    startX: 0,
+    startY: 0,
+    lastTime: 0,
+    scratchSpeed: 0
+  },
+  b: {
+    isScratching: false,
+    startX: 0,
+    startY: 0,
+    lastTime: 0,
+    scratchSpeed: 0
+  }
+};
+let autoMixInterval = null;
+const autoMixSpeed = 3000;
+let hasValidRecording = false;
+const loops = {
+  a: {
+    start: null,
+    end: null,
+    active: false,
+    isSettingLoop: false
+  },
+  b: {
+    start: null,
+    end: null,
+    active: false,
+    isSettingLoop: false
+  }
+};
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+function createAudioEffects(deck) {
+  if (!audioContext || !audioNodes[deck] || !audioNodes[deck].source || !audioNodes[deck].gainNode || !audioNodes[deck].analyser) {
+    console.warn('Required audio nodes not ready for deck', deck);
+    return;
+  }
+  const reverb = audioContext.createConvolver();
+  const reverbTime = 2;
+  const sampleRate = audioContext.sampleRate;
+  const length = sampleRate * reverbTime;
+  const impulse = audioContext.createBuffer(2, length, sampleRate);
+  for (let channel = 0; channel < 2; channel++) {
+    const impulseData = impulse.getChannelData(channel);
+    for (let i = 0; i < length; i++) {
+      impulseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 2);
+    }
+  }
+  reverb.buffer = impulse;
+  const delay = audioContext.createDelay();
+  delay.delayTime.value = 0.3;
+  const delayFeedback = audioContext.createGain();
+  delayFeedback.gain.value = 0.4;
+  delay.connect(delayFeedback);
+  delayFeedback.connect(delay);
+  const flanger = audioContext.createDelay();
+  flanger.delayTime.value = 0.005;
+  const oscillator = audioContext.createOscillator();
+  const flangerGain = audioContext.createGain();
+  flangerGain.gain.value = 0.002;
+  oscillator.frequency.value = 0.5;
+  oscillator.connect(flangerGain);
+  flangerGain.connect(flanger.delayTime);
+  oscillator.start();
+  const filter = audioContext.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 1000;
+  filter.Q.value = 1;
+  const crossfadeGain = audioContext.createGain();
+  audioNodes[deck] = audioNodes[deck] || {};
+  audioNodes[deck].crossfadeGain = crossfadeGain;
+  audioNodes[deck].reverb = reverb;
+  audioNodes[deck].delay = delay;
+  audioNodes[deck].flanger = flanger;
+  audioNodes[deck].filter = filter;
+  audioNodes[deck].reverb.bypass = true;
+  audioNodes[deck].delay.bypass = true;
+  audioNodes[deck].flanger.bypass = true;
+  audioNodes[deck].filter.bypass = true;
+  audioNodes[deck].source.connect(audioNodes[deck].gainNode);
+  audioNodes[deck].gainNode.connect(audioNodes[deck].crossfadeGain);
+  audioNodes[deck].crossfadeGain.connect(audioNodes[deck].analyser);
+  audioNodes[deck].analyser.connect(audioContext.destination);
+}
+function isTrackLoaded(deck) {
+  return audioElements[deck] && audioElements[deck].src !== '';
+}
+function updateButtonStates() {
+  const trackALoaded = isTrackLoaded('a');
+  const trackBLoaded = isTrackLoaded('b');
+  document.querySelector('.play-button[data-deck="a"]').disabled = !trackALoaded;
+  document.querySelector('.play-button[data-deck="b"]').disabled = !trackBLoaded;
+  document.querySelector('.auto-mix-button').disabled = !(trackALoaded && trackBLoaded);
+  document.querySelector('.record-button').disabled = !(trackALoaded || trackBLoaded);
+}
+function isAnyDeckPlaying() {
+  return !audioElements.a.paused || !audioElements.b.paused;
+}
+document.querySelectorAll('.audio-input').forEach(input => {
+  input.addEventListener('change', function (e) {
+    const deck = this.dataset?.deck;
+    if (!deck) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+      if (!audioElements[deck]) return;
+      audioElements[deck].src = e.target.result;
+      const trackInfo = document.getElementById(`track-info-${deck}`);
+      if (trackInfo) {
+        trackInfo.textContent = file.name;
+        trackInfo.style.animation = 'none';
+        trackInfo.offsetHeight;
+      }
+      const speedSlider = document.querySelector(`.speed-slider[data-deck="${deck}"]`);
+      if (speedSlider) {
+        audioElements[deck].playbackRate = parseFloat(speedSlider.value);
+      }
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      try {
+        const track = audioElements[deck];
+        const source = audioContext.createMediaElementSource(track);
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = parseFloat(document.querySelector(`.volume-slider[data-deck="${deck}"]`).value);
+        const analyser = audioContext.createAnalyser();
+        audioNodes[deck] = audioNodes[deck] || {};
+        audioNodes[deck].source = source;
+        audioNodes[deck].gainNode = gainNode;
+        audioNodes[deck].analyser = analyser;
+        createAudioEffects(deck);
+      } catch (err) {
+        console.error('Error setting up audio nodes:', err);
+      }
+      loops[deck] = {
+        start: null,
+        end: null,
+        active: false,
+        isSettingLoop: false
+      };
+      const loopButton = input.closest('.deck').querySelector('.loop-button');
+      const loopPoints = loopButton.nextElementSibling;
+      loopButton.textContent = 'Set Loop';
+      loopButton.classList.remove('active');
+      loopPoints.style.display = 'none';
+      updateButtonStates();
+    };
+    reader.readAsDataURL(file);
+  });
+});
+document.querySelectorAll('.speed-slider').forEach(slider => {
+  slider.addEventListener('input', function () {
+    const deck = this.dataset.deck;
+    const value = parseFloat(this.value);
+    if (audioElements[deck]) {
+      audioElements[deck].playbackRate = value;
+    }
+    document.querySelector(`.speed-value[data-deck="${deck}"]`).textContent = `${value.toFixed(1)}x`;
+  });
+});
+document.querySelectorAll('.volume-slider').forEach(slider => {
+  slider.addEventListener('input', function () {
+    const deck = this.dataset.deck;
+    const value = parseFloat(this.value);
+    if (audioNodes[deck]?.gainNode) {
+      audioNodes[deck].gainNode.gain.value = value;
+    }
+    document.querySelector(`.volume-value[data-deck="${deck}"]`).textContent = `${Math.round(value * 100)}%`;
+  });
+});
+document.querySelectorAll('.volume-reset').forEach(button => {
+  button.addEventListener('click', function () {
+    const deck = this.dataset.deck;
+    const defaultVolume = 1.0;
+    const slider = document.querySelector(`.volume-slider[data-deck="${deck}"]`);
+    slider.value = defaultVolume;
+    if (audioNodes[deck]?.gainNode) {
+      audioNodes[deck].gainNode.gain.value = defaultVolume;
+    }
+    document.querySelector(`.volume-value[data-deck="${deck}"]`).textContent = '100%';
+  });
+});
+document.querySelectorAll('.waveform-data').forEach(waveform => {
+  waveform.innerHTML = '';
+  for (let i = 0; i < 35; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'waveform-bar';
+    bar.style.animationDelay = `${i * 0.02}s`;
+    bar.style.height = `${Math.random() * 60 + 40}%`;
+    waveform.appendChild(bar);
+  }
+});
+document.querySelectorAll('.knob').forEach(knob => {
+  let rotating = false;
+  let startAngle = 0;
+  let currentRotation = 0;
+  knob.addEventListener('mousedown', e => {
+    rotating = true;
+    const rect = knob.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+  });
+  document.addEventListener('mousemove', e => {
+    if (!rotating) return;
+    const rect = knob.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+    const rotation = angle - startAngle;
+    currentRotation = (currentRotation + rotation * 180 / Math.PI) % 360;
+    knob.querySelector('::after').style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+    startAngle = angle;
+  });
+  document.addEventListener('mouseup', () => {
+    rotating = false;
+  });
+});
+const crossfader = document.querySelector('.crossfader');
+const handle = document.querySelector('.crossfader-handle');
+let isDragging = false;
+handle.addEventListener('mousedown', e => {
+  isDragging = true;
+  if (autoMixInterval) {
+    clearInterval(autoMixInterval);
+    autoMixInterval = null;
+    document.querySelector('.auto-mix-button').textContent = 'Auto Mix';
+    document.querySelector('.auto-mix-button').classList.remove('active');
+  }
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const rect = crossfader.getBoundingClientRect();
+  let newY = e.clientY - rect.top - handle.offsetHeight / 2;
+  newY = Math.max(0, Math.min(newY, rect.height - handle.offsetHeight));
+  handle.style.top = `${newY}px`;
+  const position = newY / (rect.height - handle.offsetHeight);
+  const gainA = Math.cos(position * Math.PI / 2);
+  const gainB = Math.cos((1 - position) * Math.PI / 2);
+  if (audioNodes.a?.crossfadeGain) {
+    audioNodes.a.crossfadeGain.gain.value = gainA;
+  }
+  if (audioNodes.b?.crossfadeGain) {
+    audioNodes.b.crossfadeGain.gain.value = gainB;
+  }
+});
+document.addEventListener('mouseup', () => {
+  isDragging = false;
+  const rect = crossfader.getBoundingClientRect();
+  const handleRect = handle.getBoundingClientRect();
+  const position = (handleRect.top - rect.top) / (rect.height - handle.offsetHeight);
+  const gainA = Math.cos(position * Math.PI / 2);
+  const gainB = Math.cos((1 - position) * Math.PI / 2);
+  if (audioNodes.a?.crossfadeGain) {
+    audioNodes.a.crossfadeGain.gain.value = gainA;
+  }
+  if (audioNodes.b?.crossfadeGain) {
+    audioNodes.b.crossfadeGain.gain.value = gainB;
+  }
+});
+function startAutoMix() {
+  if (autoMixInterval) {
+    clearInterval(autoMixInterval);
+    autoMixInterval = null;
+    return;
+  }
+  if (!isAnyDeckPlaying()) {
+    return;
+  }
+  let goingUp = true;
+  const crossfader = document.querySelector('.crossfader');
+  const handle = document.querySelector('.crossfader-handle');
+  const rect = crossfader.getBoundingClientRect();
+  const maxY = rect.height - handle.offsetHeight;
+  autoMixInterval = setInterval(() => {
+    if (!isAnyDeckPlaying()) {
+      clearInterval(autoMixInterval);
+      autoMixInterval = null;
+      const autoMixButton = document.querySelector('.auto-mix-button');
+      autoMixButton.textContent = 'Auto Mix';
+      autoMixButton.classList.remove('active');
+      return;
+    }
+    const currentY = parseInt(handle.style.top) || 0;
+    if (goingUp) {
+      let newY = currentY + 1;
+      if (newY >= maxY) {
+        newY = maxY;
+        goingUp = false;
+      }
+      handle.style.top = `${newY}px`;
+    } else {
+      let newY = currentY - 1;
+      if (newY <= 0) {
+        newY = 0;
+        goingUp = true;
+      }
+      handle.style.top = `${newY}px`;
+    }
+    const position = parseInt(handle.style.top) / maxY;
+    const gainA = Math.cos(position * Math.PI / 2);
+    const gainB = Math.cos((1 - position) * Math.PI / 2);
+    if (audioNodes.a?.crossfadeGain) {
+      audioNodes.a.crossfadeGain.gain.value = gainA;
+    }
+    if (audioNodes.b?.crossfadeGain) {
+      audioNodes.b.crossfadeGain.gain.value = gainB;
+    }
+  }, 10);
+}
+document.querySelector('.auto-mix-button').addEventListener('click', function () {
+  if (this.disabled) return;
+  if (autoMixInterval) {
+    this.textContent = 'Auto Mix';
+    this.classList.remove('active');
+    clearInterval(autoMixInterval);
+    autoMixInterval = null;
+  } else {
+    this.textContent = 'Stop Auto Mix';
+    this.classList.add('active');
+    startAutoMix();
+  }
+});
+document.querySelectorAll('.effect-button').forEach(button => {
+  button.addEventListener('click', () => {
+    if (!audioContext) {
+      console.warn('Audio context not initialized');
+      return;
+    }
+    const deck = button.closest('.deck')?.querySelector('.audio-input')?.dataset?.deck;
+    if (!deck) {
+      console.warn('Could not determine deck');
+      return;
+    }
+    const effect = button.textContent?.toLowerCase();
+    if (!effect) {
+      console.warn('No effect specified');
+      return;
+    }
+    if (!audioNodes[deck] || !audioNodes[deck][effect]) {
+      console.warn('Effect or audio nodes not ready:', effect, deck);
+      return;
+    }
+    const isEffectActive = button.style.background === 'rgb(51, 51, 51)' || button.style.background === '';
+    if (isEffectActive) {
+      button.style.background = '#ff1493';
+      try {
+        if (effect === 'reverb') {
+          audioNodes[deck].source?.connect(audioNodes[deck].reverb);
+          audioNodes[deck].reverb?.connect(audioNodes[deck].gainNode);
+        } else if (effect === 'delay') {
+          audioNodes[deck].source?.connect(audioNodes[deck].delay);
+          audioNodes[deck].delay?.connect(audioNodes[deck].gainNode);
+        } else if (effect === 'flanger') {
+          audioNodes[deck].source?.connect(audioNodes[deck].flanger);
+          audioNodes[deck].flanger?.connect(audioNodes[deck].gainNode);
+        } else if (effect === 'filter') {
+          audioNodes[deck].source?.connect(audioNodes[deck].filter);
+          audioNodes[deck].filter?.connect(audioNodes[deck].gainNode);
+        }
+      } catch (e) {
+        console.warn('Error connecting effect:', e);
+      }
+      try {
+        switch (effect) {
+          case 'delay':
+            audioNodes[deck].delay.delayTime.value = 0.3;
+            break;
+          case 'flanger':
+            audioNodes[deck].flanger.delayTime.value = 0.005;
+            break;
+          case 'filter':
+            audioNodes[deck].filter.frequency.value = 1000;
+            break;
+        }
+      } catch (e) {
+        console.warn('Error setting effect parameters:', e);
+      }
+    } else {
+      button.style.background = '#333';
+      try {
+        if (effect === 'reverb') {
+          audioNodes[deck].reverb?.disconnect(audioNodes[deck].gainNode);
+        } else if (effect === 'delay') {
+          audioNodes[deck].delay?.disconnect(audioNodes[deck].gainNode);
+        } else if (effect === 'flanger') {
+          audioNodes[deck].flanger?.disconnect(audioNodes[deck].gainNode);
+        } else if (effect === 'filter') {
+          audioNodes[deck].filter?.disconnect(audioNodes[deck].gainNode);
+        }
+      } catch (e) {
+        console.warn('Error disconnecting effect:', e);
+      }
+      try {
+        audioNodes[deck].source?.connect(audioNodes[deck].gainNode);
+      } catch (e) {
+        console.warn('Error reconnecting source:', e);
+      }
+    }
+  });
+});
+document.querySelectorAll('.platter').forEach(platter => {
+  platter.addEventListener('click', () => {
+    platter.classList.toggle('playing');
+  });
+});
+document.querySelectorAll('.play-button').forEach(button => {
+  button.addEventListener('click', async function () {
+    if (this.disabled) return;
+    const deck = this.dataset.deck;
+    const audio = audioElements[deck];
+    const platter = this.parentElement.querySelector('.platter');
+    const waveformData = this.parentElement.querySelector('.waveform-data');
+    try {
+      if (audio.paused) {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          this.textContent = `Pausar Track ${deck.toUpperCase()}`;
+          this.classList.add('playing');
+          platter.classList.add('playing');
+          if (waveformData) {
+            waveformData.style.display = 'flex';
+          }
+        }
+      } else {
+        audio.pause();
+        this.textContent = `Reproducir Track ${deck.toUpperCase()}`;
+        this.classList.remove('playing');
+        platter.classList.remove('playing');
+        if (waveformData) {
+          waveformData.style.display = 'none';
+        }
+        if (!isAnyDeckPlaying() && autoMixInterval) {
+          clearInterval(autoMixInterval);
+          autoMixInterval = null;
+          const autoMixButton = document.querySelector('.auto-mix-button');
+          autoMixButton.textContent = 'Auto Mix';
+          autoMixButton.classList.remove('active');
+        }
+      }
+    } catch (error) {
+      console.warn('Playback error:', error);
+      this.textContent = `Reproducir Track ${deck.toUpperCase()}`;
+      this.classList.remove('playing');
+      platter.classList.remove('playing');
+      if (waveformData) {
+        waveformData.style.display = 'none';
+      }
+    }
+  });
+});
+Object.keys(audioElements).forEach(deck => {
+  audioElements[deck].addEventListener('ended', () => {
+    const button = document.querySelector(`.play-button[data-deck="${deck}"]`);
+    const platter = button.parentElement.querySelector('.platter');
+    const waveformData = button.parentElement.querySelector('.waveform-data');
+    button.textContent = `Reproducir Track ${deck.toUpperCase()}`;
+    button.classList.remove('playing');
+    platter.classList.remove('playing');
+    if (waveformData) {
+      waveformData.style.display = 'none';
+    }
+  });
+  audioElements[deck].addEventListener('error', e => {
+    console.warn(`Audio error on deck ${deck}:`, e.target.error);
+    const button = document.querySelector(`.play-button[data-deck="${deck}"]`);
+    const platter = button.parentElement.querySelector('.platter');
+    const waveformData = button.parentElement.querySelector('.waveform-data');
+    button.textContent = `Reproducir Track ${deck.toUpperCase()}`;
+    button.classList.remove('playing');
+    platter.classList.remove('playing');
+    if (waveformData) {
+      waveformData.style.display = 'none';
+    }
+  });
+  audioElements[deck].addEventListener('pause', () => {
+    const waveformData = document.querySelector(`.deck[data-deck="${deck}"] .waveform-data`);
+    if (waveformData) {
+      waveformData.style.display = 'none';
+    }
+  });
+  audioElements[deck].addEventListener('timeupdate', () => {
+    if (loops[deck].active && loops[deck].end !== null) {
+      if (audioElements[deck].currentTime >= loops[deck].end) {
+        audioElements[deck].currentTime = loops[deck].start;
+      }
+    }
+  });
+});
+const padSounds = {
+  kick: 'https://assets.codepen.io/12904/kick.wav',
+  snare: 'https://assets.codepen.io/12904/snare.wav',
+  hihat: 'https://assets.codepen.io/12904/hihat.wav',
+  clap: 'https://assets.codepen.io/12904/clap.wav',
+  crash: 'https://assets.codepen.io/12904/crash.wav',
+  fx1: 'https://assets.codepen.io/12904/fx1.wav',
+  fx2: 'https://assets.codepen.io/12904/fx2.wav',
+  fx3: 'https://assets.codepen.io/12904/fx3.wav'
+};
+const padAudioElements = {
+  a: {},
+  b: {}
+};
+Object.entries(padSounds).forEach(([sound, url]) => {
+  padAudioElements.a[sound] = new Audio(url);
+  padAudioElements.a[sound].preload = 'auto';
+  padAudioElements.b[sound] = new Audio(url);
+  padAudioElements.b[sound].preload = 'auto';
+});
+const padKeyCodes = {
+  'F1': 'kick',
+  'F2': 'snare',
+  'F3': 'hihat',
+  'F4': 'clap',
+  'F5': 'crash',
+  'F6': 'fx1',
+  'F7': 'fx2',
+  'F8': 'fx3'
+};
+document.querySelectorAll('.pad-upload').forEach(uploadInput => {
+  const uploadButton = uploadInput.nextElementSibling;
+  const pad = uploadInput.parentNode.querySelector('.pad');
+  const sound = pad.dataset.sound;
+  const deck = pad.dataset.deck;
+
+  uploadButton.addEventListener('click', () => {
+    uploadInput.click();
+  });
+
+  uploadInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      padAudioElements[deck][sound] = new Audio(e.target.result);
+      padAudioElements[deck][sound].preload = 'auto';
+      pad.textContent = `${sound.toUpperCase()} (custom)`;
+    };
+    reader.readAsDataURL(file);
+  });
+});
+document.querySelectorAll('.pad').forEach(pad => {
+  pad.addEventListener('mousedown', async () => {
+    const sound = pad.dataset.sound;
+    const deck = pad.dataset.deck;
+    if (!sound || !padAudioElements[deck] || !padAudioElements[deck][sound]) return;
+    
+    try {
+      padAudioElements[deck][sound].currentTime = 0;
+      await padAudioElements[deck][sound].play();
+      pad.classList.add('active');
+    } catch (err) {
+      console.warn('Error playing pad sound:', err);
+    }
+  });
+
+  pad.addEventListener('mouseup', () => {
+    pad.classList.remove('active');
+  });
+
+  pad.addEventListener('mouseleave', () => {
+    pad.classList.remove('active');
+  });
+});
+document.addEventListener('keydown', async e => {
+  if (e.key >= 'F1' && e.key <= 'F8') {
+    e.preventDefault();
+  }
+  const sound = padKeyCodes[e.key];
+  if (sound && padAudioElements.a[sound]) {
+    try {
+      padAudioElements.a[sound].currentTime = 0;
+      await padAudioElements.a[sound].play();
+      const pad = document.querySelector(`.pad[data-sound="${sound}"][data-deck="a"]`);
+      if (pad) {
+        pad.classList.add('active');
+        setTimeout(() => {
+          pad.classList.remove('active');
+        }, 100);
+      }
+    } catch (err) {
+      console.warn('Error playing pad sound:', err);
+    }
+  }
+});
+document.addEventListener('click', () => {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    for (const deck of ['a', 'b']) {
+      Object.entries(padAudioElements[deck]).forEach(([sound, audio]) => {
+        try {
+          const source = audioContext.createMediaElementSource(audio);
+          const gainNode = audioContext.createGain();
+          source.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+        } catch (err) {
+          console.warn(`Error connecting pad sound ${sound} for deck ${deck}:`, err);
+        }
+      });
+    }
+  }
+}, { once: true });
+document.querySelectorAll('.speed-reset').forEach(button => {
+  button.addEventListener('click', function () {
+    const deck = this.dataset.deck;
+    const defaultSpeed = 1.0;
+    const slider = document.querySelector(`.speed-slider[data-deck="${deck}"]`);
+    slider.value = defaultSpeed;
+    const display = document.querySelector(`.speed-value[data-deck="${deck}"]`);
+    display.textContent = `${defaultSpeed.toFixed(1)}x`;
+    if (audioElements[deck]) {
+      audioElements[deck].playbackRate = defaultSpeed;
+    }
+  });
+});
+document.getElementById('theme-select').addEventListener('change', function (e) {
+  const theme = e.target.value;
+  applyTheme(theme);
+  saveTheme(theme);
+});
+document.addEventListener('DOMContentLoaded', () => {
+  updateButtonStates();
+  const savedTheme = loadTheme();
+  document.getElementById('theme-select').value = savedTheme;
+  applyTheme(savedTheme);
+});
+document.querySelectorAll('.loop-button').forEach(button => {
+  const deck = button.closest('.deck').querySelector('.audio-input').dataset.deck;
+  const loopPoints = button.nextElementSibling;
+  const audio = audioElements[deck];
+  button.addEventListener('click', () => {
+    if (!audio.src) return;
+    if (!loops[deck].isSettingLoop) {
+      loops[deck].isSettingLoop = true;
+      loops[deck].start = audio.currentTime;
+      button.textContent = 'Set End Point';
+      button.classList.add('active');
+      loopPoints.style.display = 'block';
+      loopPoints.querySelector('.loop-start').textContent = formatTime(loops[deck].start);
+    } else {
+      loops[deck].isSettingLoop = false;
+      loops[deck].end = audio.currentTime;
+      loops[deck].active = true;
+      button.textContent = 'Loop Active';
+      loopPoints.querySelector('.loop-end').textContent = formatTime(loops[deck].end);
+    }
+  });
+  loopPoints.querySelector('.clear-loop').addEventListener('click', () => {
+    loops[deck].start = null;
+    loops[deck].end = null;
+    loops[deck].active = false;
+    loops[deck].isSettingLoop = false;
+    button.textContent = 'Set Loop';
+    button.classList.remove('active');
+    loopPoints.style.display = 'none';
+  });
+});
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordingStream = null;
+document.querySelector('.record-button').addEventListener('click', async function () {
+  if (this.disabled) return;
+  if (!this.classList.contains('recording')) {
+    try {
+      recordedChunks = [];
+      const audioDestination = audioContext.createMediaStreamDestination();
+      if (audioNodes.a?.gainNode) {
+        audioNodes.a.gainNode.connect(audioDestination);
+      }
+      if (audioNodes.b?.gainNode) {
+        audioNodes.b.gainNode.connect(audioDestination);
+      }
+      recordingStream = audioDestination.stream;
+      mediaRecorder = new MediaRecorder(recordingStream);
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) {
+          recordedChunks.push(e.data);
+        }
+      };
+      mediaRecorder.onstop = () => {
+        const downloadButton = document.querySelector('.download-button');
+        downloadButton.disabled = false;
+        hasValidRecording = true;
+      };
+      mediaRecorder.start();
+      this.textContent = 'Stop Recording';
+      this.classList.add('recording');
+    } catch (err) {
+      console.error('Error starting recording:', err);
+    }
+  } else {
+    try {
+      mediaRecorder.stop();
+      this.textContent = 'Start Recording';
+      this.classList.remove('recording');
+    } catch (err) {
+      console.error('Error stopping recording:', err);
+    }
+  }
+});
+document.querySelector('.download-button').addEventListener('click', async function () {
+  if (!hasValidRecording || this.disabled) return;
+  try {
+    const blob = new Blob(recordedChunks, {
+      type: 'audio/wav'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dj-mix.wav';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Error downloading recording:', err);
+  }
+});</script>
+</body>
+</html>
